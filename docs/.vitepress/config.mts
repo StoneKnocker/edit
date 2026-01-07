@@ -4,6 +4,7 @@ import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import OptimizeExclude from 'vite-plugin-optimize-exclude'
 import Terminal from 'vite-plugin-terminal'
+import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitepress'
 import {
   commitRef,
@@ -43,17 +44,20 @@ export default defineConfig({
     ['meta', { name: 'og:locale', content: 'en' }],
     ['link', { rel: 'icon', href: '/test.png' }],
     // PWA
-    ['link', { rel: 'icon', href: '/test.png', type: 'image/svg+xml' }],
-    ['link', { rel: 'alternate icon', href: '/test.png' }],
-    ['link', { rel: 'mask-icon', href: '/test.png', color: '#7bc5e4' }],
+    ['link', { rel: 'manifest', href: '/manifest.json' }],
+    ['link', { rel: 'icon', href: '/pwa_icon.png', type: 'image/svg+xml' }],
+    ['link', { rel: 'alternate icon', href: '/pwa_icon.png' }],
+    ['link', { rel: 'mask-icon', href: '/pwa_icon.png', color: '#000000ff' }],
     ['meta', { name: 'keywords', content: meta.keywords.join(' ') }],
-    ['link', { rel: 'apple-touch-icon', href: '/test.png', sizes: '192x192' }],
+    ['link', { rel: 'apple-touch-icon', href: '/pwa_icon.png', sizes: '192x192' }],
+    ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
+    ['meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'default' }],
     // Bing site verification
     [
       'meta',
       {
         name: 'msvalidate.01',
-        content: '55ae5a0600A8C7827B59CFD506D76DC2'
+        content: 'F3028112EF6F929B562F4B18E58E3691'
       }
     ],
     // Google site verification
@@ -92,7 +96,13 @@ export default defineConfig({
         {
           find: /^.*VPSwitchAppearance\.vue$/,
           replacement: fileURLToPath(
-            new URL('./theme/Appearance.vue', import.meta.url)
+            new URL('./theme/components/ThemeDropdown.vue', import.meta.url)
+          )
+        },
+        {
+          find: /^.*VPLocalSearchBox\.vue$/,
+          replacement: fileURLToPath(
+            new URL('./theme/components/VPLocalSearchBox.vue', import.meta.url)
           )
         }
       ]
@@ -114,6 +124,58 @@ export default defineConfig({
         biomelintrc: {
           enabled: true,
           filepath: './.cache/imports.json'
+        }
+      }),
+      VitePWA({
+        registerType: 'autoUpdate',
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-cache',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 365 // 365 days
+                },
+                cacheableResponse: {
+                  statuses: [0, 200]
+                }
+              }
+            }
+          ]
+        },
+        manifest: {
+          name: 'FMHY - freemediaheckyeah',
+          short_name: 'FMHY',
+          description: 'The largest collection of free stuff on the internet!',
+          theme_color: '#000000ff',
+          background_color: '#000000ff',
+          display: 'standalone',
+          orientation: 'portrait',
+          scope: '/',
+          start_url: '/',
+          icons: [
+            {
+              src: '/fmhy.ico',
+              sizes: '16x16',
+              type: 'image/x-icon'
+            },
+            {
+              src: '/pwa_icon.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any maskable'
+            },
+            {
+              src: '/pwa_icon.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any maskable'
+            }
+          ]
         }
       }),
       transformsPlugin(),
@@ -152,14 +214,19 @@ export default defineConfig({
     search,
     footer: {
       message: `${feedback} (rev: ${commitRef})`,
-      copyright: `© ${new Date().getFullYear()}, <a href="https://i.ibb.co/pLVXBSh/image.png">Estd 2018.</a>`
+      copyright:
+        `© ${new Date().getFullYear()}, <a href="https://i.ibb.co/VJQmQ9t/image.png">Estd 2018.</a>` +
+        `<br/> This site does not host any files.`
     },
     editLink: {
       pattern: 'https://github.com/fmhy/edit/edit/main/docs/:path',
       text: '📝 Edit this page'
     },
     outline: 'deep',
-    logo: '/fmhy.ico',
+    logo: {
+      src: '/fmhy.ico',
+      alt: 'FMHY Logo'
+    },
     nav,
     sidebar,
     socialLinks
